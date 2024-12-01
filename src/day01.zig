@@ -4,8 +4,8 @@ const runner = @import("runner.zig");
 pub const main = runner.run("01", solve);
 
 fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
-    var lefts = std.ArrayListUnmanaged(u32){};
-    var rights = std.ArrayListUnmanaged(u32){};
+    var lefts = try std.ArrayListUnmanaged(u32).initCapacity(alloc, 1000);
+    var rights = try std.ArrayListUnmanaged(u32).initCapacity(alloc, 1000);
     defer lefts.deinit(alloc);
     defer rights.deinit(alloc);
 
@@ -30,7 +30,37 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
         }
     }
 
-    return .{ sum, 0 };
+    var similarity: usize = 0;
+    var l: usize = 0;
+    var r: usize = 0;
+
+    outer: while (l < lefts.items.len and r < rights.items.len) {
+        while (lefts.items[l] > rights.items[r]) {
+            r += 1;
+            if (r == rights.items.len) {
+                break :outer;
+            }
+        }
+        while (lefts.items[l] < rights.items[r]) {
+            l += 1;
+            if (l == lefts.items.len) {
+                break :outer;
+            }
+        }
+        const pre = r;
+        const pre2 = l;
+
+        while (r < rights.items.len and lefts.items[l] == rights.items[r]) {
+            r += 1;
+        }
+        while (l < lefts.items.len and lefts.items[l] == rights.items[pre]) {
+            l += 1;
+        }
+
+        similarity += lefts.items[pre2] * (r - pre) * (l - pre2);
+    }
+
+    return .{ sum, similarity };
 }
 
 test {
@@ -46,4 +76,6 @@ test {
     const example_result: usize = 11;
     const result = try solve(std.testing.allocator, input);
     try std.testing.expectEqual(example_result, result[0]);
+    const example_result2: usize = 31;
+    try std.testing.expectEqual(example_result2, result[1]);
 }
