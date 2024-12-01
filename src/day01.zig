@@ -4,25 +4,27 @@ const runner = @import("runner.zig");
 pub const main = runner.run("01", solve);
 
 fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
-    var lefts = try std.ArrayListUnmanaged(u32).initCapacity(alloc, 1000);
-    var rights = try std.ArrayListUnmanaged(u32).initCapacity(alloc, 1000);
-    defer lefts.deinit(alloc);
-    defer rights.deinit(alloc);
+    var leftsAL = try std.ArrayListUnmanaged(u32).initCapacity(alloc, 1000);
+    var rightsAL = try std.ArrayListUnmanaged(u32).initCapacity(alloc, 1000);
+    defer leftsAL.deinit(alloc);
+    defer rightsAL.deinit(alloc);
 
     var lines = std.mem.splitScalar(u8, input, '\n');
     while (lines.next()) |line| {
         var numbers = std.mem.tokenizeScalar(u8, line, ' ');
         const left = try std.fmt.parseInt(u32, numbers.next().?, 10);
         const right = try std.fmt.parseInt(u32, numbers.next().?, 10);
-        try lefts.append(alloc, left);
-        try rights.append(alloc, right);
+        try leftsAL.append(alloc, left);
+        try rightsAL.append(alloc, right);
     }
 
-    std.mem.sort(u32, lefts.items, {}, std.sort.asc(u32));
-    std.mem.sort(u32, rights.items, {}, std.sort.asc(u32));
+    const lefts = leftsAL.items;
+    const rights = rightsAL.items;
+    std.mem.sort(u32, lefts, {}, std.sort.asc(u32));
+    std.mem.sort(u32, rights, {}, std.sort.asc(u32));
 
     var sum: usize = 0;
-    for (lefts.items, rights.items) |left, right| {
+    for (lefts, rights) |left, right| {
         if (left > right) {
             sum += left - right;
         } else {
@@ -34,30 +36,30 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     var l: usize = 0;
     var r: usize = 0;
 
-    outer: while (l < lefts.items.len and r < rights.items.len) {
-        while (lefts.items[l] > rights.items[r]) {
+    outer: while (l < lefts.len and r < rights.len) {
+        while (lefts[l] > rights[r]) {
             r += 1;
-            if (r == rights.items.len) {
+            if (r == rights.len) {
                 break :outer;
             }
         }
-        while (lefts.items[l] < rights.items[r]) {
+        while (lefts[l] < rights[r]) {
             l += 1;
-            if (l == lefts.items.len) {
+            if (l == lefts.len) {
                 break :outer;
             }
         }
-        const pre = r;
-        const pre2 = l;
 
-        while (r < rights.items.len and lefts.items[l] == rights.items[r]) {
+        const preR = r;
+        const preL = l;
+        while (r < rights.len and lefts[preL] == rights[r]) {
             r += 1;
         }
-        while (l < lefts.items.len and lefts.items[l] == rights.items[pre]) {
+        while (l < lefts.len and lefts[l] == rights[preR]) {
             l += 1;
         }
 
-        similarity += lefts.items[pre2] * (r - pre) * (l - pre2);
+        similarity += lefts[preL] * (r - preR) * (l - preL);
     }
 
     return .{ sum, similarity };
