@@ -7,10 +7,27 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     _ = alloc;
 
     var sum: usize = 0;
+    var enabledSum: usize = 0;
 
+    var enabled: bool = true;
     var i: usize = 0;
     while (i < input.len) : (i += 1) {
-        if (input[i] != 'm') continue;
+        if (input[i] != 'm') {
+            if (input[i] != 'd') continue;
+            const do = "o()";
+            i += 1;
+            if (input.len < i + do.len) continue;
+            if (std.mem.eql(u8, input[i .. i + do.len], do)) {
+                enabled = true;
+                i += do.len;
+            }
+            const dont = "on't()";
+            if (input.len < i + dont.len) continue;
+            if (std.mem.eql(u8, input[i .. i + dont.len], dont)) {
+                enabled = false;
+                i += dont.len;
+            }
+        }
         if (input[i + 1] != 'u') continue;
         if (input[i + 2] != 'l') continue;
         if (input[i + 3] != '(') continue;
@@ -33,9 +50,12 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
         const r = std.fmt.parseInt(i32, right, 10) catch continue;
 
         sum += @intCast(l * r);
+        if (enabled) {
+            enabledSum += @intCast(l * r);
+        }
     }
 
-    return .{ sum, 0 };
+    return .{ sum, enabledSum };
 }
 
 test {
@@ -46,6 +66,11 @@ test {
     const example_result: usize = 161;
     const result = try solve(std.testing.allocator, input);
     try std.testing.expectEqual(example_result, result[0]);
-    const example_result2: usize = 0;
-    try std.testing.expectEqual(example_result2, result[1]);
+
+    const input2 =
+        \\xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+    ;
+    const result2 = try solve(std.testing.allocator, input2);
+    const example_result2: usize = 48;
+    try std.testing.expectEqual(example_result2, result2[1]);
 }
