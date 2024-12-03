@@ -1,7 +1,7 @@
 const std = @import("std");
 const runner = @import("runner.zig");
 
-pub const main = runner.run("01", solve);
+pub const main = runner.run("03", solve);
 
 fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     _ = alloc;
@@ -27,6 +27,8 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
                 enabled = false;
                 i += dont.len;
             }
+            i -= 1;
+            continue;
         }
         if (input[i + 1] != 'u') continue;
         if (input[i + 2] != 'l') continue;

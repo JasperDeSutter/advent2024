@@ -1,7 +1,7 @@
 const std = @import("std");
 const runner = @import("runner.zig");
 
-pub const main = runner.run("01", solve);
+pub const main = runner.run("%%", solve);
 
 fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     _ = alloc;
