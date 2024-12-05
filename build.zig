@@ -4,14 +4,14 @@ const builtin = std.builtin;
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardOptimizeOption(.{
-        .preferred_optimize_mode = .ReleaseFast,
+        .preferred_optimize_mode = .ReleaseSafe,
     });
 
     const test_all_step = b.step("test", "Run all tests");
     const run_all_step = b.step("all", "Run all");
 
     var day: u32 = 1;
-    const end: u32 = 4;
+    const end: u32 = 5;
     while (day <= end) : (day += 1) {
         var dayStringBuf: [5]u8 = undefined;
         const dayString = try std.fmt.bufPrint(dayStringBuf[0..], "day{:0>2}", .{day});
