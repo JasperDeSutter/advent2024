@@ -7,21 +7,28 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     const cols = std.mem.indexOfScalar(u8, input, '\n').? + 1;
     const start = std.mem.indexOfScalar(u8, input, '^').?;
 
-    const visitMap = try alloc.alloc(u8, input.len);
-    defer alloc.free(visitMap);
+    var bitset = try std.DynamicBitSet.initEmpty(alloc, input.len);
+    defer bitset.deinit();
 
-    @memset(visitMap, 0);
-    _ = simulate(input, cols, start, visitMap, input.len);
+    const dirs: [4]usize = .{
+        1,
+        cols,
+        std.math.maxInt(usize),
+        std.math.maxInt(usize) - cols + 1,
+    };
+    simulate1(input, &dirs, start, &bitset);
+
+    const visitMap2 = try alloc.alloc(u8, input.len);
+    defer alloc.free(visitMap2);
+
     var visited: usize = 0;
-    for (visitMap) |v| {
-        if (v != 0) visited += 1;
-    }
-
     var loops: usize = 0;
-    for (input, 0..) |c, i| {
-        if (c != '.') continue;
-        @memset(visitMap, 0);
-        const looping = simulate(input, cols, start, visitMap, i);
+    for (0..input.len) |i| {
+        if (!bitset.isSet(i)) continue;
+        visited += 1;
+
+        @memset(visitMap2, 0);
+        const looping = simulate2(input, &dirs, start, visitMap2, i);
         if (looping) {
             loops += 1;
         }
@@ -30,13 +37,22 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     return .{ visited, loops };
 }
 
-fn simulate(input: []const u8, cols: usize, start: usize, visitMap: []u8, obstacle: usize) bool {
-    const dirs: [4]usize = .{
-        1,
-        cols,
-        std.math.maxInt(usize),
-        std.math.maxInt(usize) - cols + 1,
-    };
+fn simulate1(input: []const u8, dirs: *const [4]usize, start: usize, bitset: *std.DynamicBitSet) void {
+    var dir: u3 = 3;
+
+    var i = start;
+    while (i < input.len) : (i +%= dirs[dir]) {
+        const c = input[i];
+        if (c == '#') {
+            i -%= dirs[dir];
+            dir = (dir + 1) % 4;
+        }
+        if (c == '\n') break;
+        bitset.set(i);
+    }
+}
+
+fn simulate2(input: []const u8, dirs: *const [4]usize, start: usize, visitMap: []u8, obstacle: usize) bool {
     var dir: u3 = 3;
 
     var i = start;
@@ -45,14 +61,14 @@ fn simulate(input: []const u8, cols: usize, start: usize, visitMap: []u8, obstac
         if (i == obstacle or c == '#') {
             i -%= dirs[dir];
             dir = (dir + 1) % 4;
-            continue;
+
+            const bit = @as(u8, 1) << dir;
+            if ((visitMap[i] & bit) != 0) return true;
+            visitMap[i] |= bit;
         }
         if (c == '\n') break;
-
-        const bit = @as(u8, 1) << dir;
-        if ((visitMap[i] & bit) != 0) return true;
-        visitMap[i] |= bit;
     }
+
     return false;
 }
 
