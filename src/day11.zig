@@ -8,6 +8,8 @@ const Node = struct {
     next: usize,
 };
 
+// idea: simulate 75 times from the 0 case, filter 1s out in real input and combine with known results.
+
 fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
     var nodes = std.ArrayList(Node).init(alloc);
     defer nodes.deinit();
@@ -24,12 +26,12 @@ fn solve(alloc: std.mem.Allocator, input: []const u8) anyerror![2]usize {
 
     const res1 = nodes.items.len;
 
-    for (0..50) |_| try simulate(&nodes);
+    // for (0..50) |_| try simulate(&nodes);
 
     return .{ res1, nodes.items.len };
 }
 
-fn simulate(nodes: *std.ArrayList(Node)) !void {
+fn simulate(nodes: *std.ArrayList(Node), filterZeros: bool) !void {
     var node: usize = 0;
     while (node < nodes.items.len) {
         const stone = &nodes.items[node];
